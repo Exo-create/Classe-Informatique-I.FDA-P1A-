@@ -61,5 +61,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_OWNER: 'Exo-create'
-          GITHUB_REPO: 'Class-Informatique'
+          GITHUB_REPO: 'Classe-Informatique-I.FDA-P1A-'
         run: node close_issues.mjs
