@@ -1,0 +1,65 @@
+name: Close Issues by Date
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Exécute tous les jours à minuit
+  workflow_dispatch:
+
+
+jobs:
+  close_issues:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install @octokit/rest
+
+      - name: Create close_issues.mjs
+        run: |
+          echo "import { Octokit } from '@octokit/rest';
+          const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+
+          async function closeIssues() {
+            console.log('Fetching issues...');
+            const issues = await octokit.issues.listForRepo({
+              owner: process.env.GITHUB_OWNER,
+              repo: process.env.GITHUB_REPO,
+              state: 'open'
+            });
+
+            console.log('Issues fetched:', issues.data.length);
+            const today = new Date();
+            for (const issue of issues.data) {
+              console.log('Processing issue:', issue.number);
+              const match = issue.body.match(/Date de fermeture: (\d{4}-\d{2}-\d{2})/);
+              if (match) {
+                const closeDate = new Date(match[1]);
+                console.log('Close date:', closeDate);
+                if (closeDate < today) {
+                  console.log('Closing issue:', issue.number);
+                  await octokit.issues.update({
+                    owner: process.env.GITHUB_OWNER,
+                    repo: process.env.GITHUB_REPO,
+                    issue_number: issue.number,
+                    state: 'closed'
+                  });
+                }
+              }
+            }
+          }
+
+          closeIssues();" > close_issues.mjs
+
+      - name: Run close_issues.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_OWNER: 'Exo-create'
+          GITHUB_REPO: 'Class-Informatique'
+        run: node close_issues.mjs
