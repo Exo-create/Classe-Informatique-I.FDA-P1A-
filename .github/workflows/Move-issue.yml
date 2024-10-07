@@ -1,9 +1,9 @@
 
-name: Update Issues by Date
+name: Update Issues by Date test
 
 on:
-  schedule:
-    - cron: '0 16 * * *' # Exécute tous les jours à 16h
+#   schedule:
+#     # - cron: '0 16 * * *' # Exécute tous les jours à 16h
   workflow_dispatch:
 
 jobs:
