@@ -1,4 +1,4 @@
-name: Move Issues to Done Column by Date
+name: Move Issues to Done Column
 
 on:
   schedule:
@@ -18,15 +18,12 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        run: npm install @octokit/rest @octokit/plugin-rest-endpoint-methods
+        run: npm install @octokit/rest
 
       - name: Create move_issues.mjs
         run: |
           echo "import { Octokit } from '@octokit/rest';
-          import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods';
-
-          const MyOctokit = Octokit.plugin(restEndpointMethods);
-          const octokit = new MyOctokit({ auth: process.env.GITHUB_TOKEN });
+          const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
           async function moveIssues() {
             console.log('Fetching issues...');
@@ -50,14 +47,18 @@ jobs:
                     column_id: process.env.GITHUB_DONE_COLUMN_ID
                   });
 
-                  const card = projectCards.data.find(card => card.content_url.includes(issue.number));
+                  const card = projectCards.data.find(card => card.content_url.endsWith(issue.number));
                   if (card) {
                     await octokit.projects.moveCard({
                       card_id: card.id,
                       position: 'top'
                     });
                   } else {
-                    console.log('No card found for issue:', issue.number);
+                    await octokit.projects.createCard({
+                      column_id: process.env.GITHUB_DONE_COLUMN_ID,
+                      content_id: issue.id,
+                      content_type: 'Issue'
+                    });
                   }
                 }
               }
@@ -71,5 +72,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_OWNER: 'Exo-create'
           GITHUB_REPO: 'Classe-Informatique-I.FDA-P1A-'
-          GITHUB_DONE_COLUMN_ID: ${{ secrets.GITHUB_DONE_COLUMN_ID }}
+          GITHUB_DONE_COLUMN_ID: ${{ secrets.DONE_COLUMN_ID }}
         run: node move_issues.mjs
