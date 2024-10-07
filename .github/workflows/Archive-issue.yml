@@ -1,12 +1,12 @@
-name: Move Issues to Done Column by Date
+name: Archive Issues by Date
 
 on:
   schedule:
-    - cron: '0 16 * * *' # Exécute tous les jours à 16h
+    - cron: '0 1 * * *' # Exécute tous les jours à minuit
   workflow_dispatch:
 
 jobs:
-  move_issues:
+  archive_issues:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -18,29 +18,14 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        run: |
-          sudo apt-get install jq
-          npm install @octokit/rest
+        run: npm install @octokit/rest
 
-      - name: Get Done Column ID
-        id: get_column_id
-        run: |
-          DONE_COLUMN_ID=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                               -H "Accept: application/vnd.github.v3+json" \
-                               https://api.github.com/projects/YOUR_PROJECT_ID/columns | \
-                               jq -r '.[] | select(.name=="Terminé") | .id')
-          if [ -z "$DONE_COLUMN_ID" ]; then
-            echo "Error: Column 'Terminé' not found" >&2
-            exit 1
-          fi
-          echo "DONE_COLUMN_ID=$DONE_COLUMN_ID" >> $GITHUB_ENV
-
-      - name: Create move_issues.mjs
+      - name: Create archive_issues.mjs
         run: |
           echo "import { Octokit } from '@octokit/rest';
           const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
-          async function moveIssues() {
+          async function archiveIssues() {
             console.log('Fetching issues...');
             const issues = await octokit.issues.listForRepo({
               owner: process.env.GITHUB_OWNER,
@@ -50,30 +35,36 @@ jobs:
 
             console.log('Issues fetched:', issues.data.length);
             const today = new Date();
+            console.log('Today\'s date:', today);
             for (const issue of issues.data) {
               console.log('Processing issue:', issue.number);
-              const match = issue.body.match(/Date de fermeture: (\d{4}-\d{2}-\d{2})/);
+              const match = issue.body.match(/Date d'archivage: (\d{4}-\d{2}-\d{2})/);
               if (match) {
-                const closeDate = new Date(match[1]);
-                console.log('Close date:', closeDate);
-                if (closeDate < today) {
-                  console.log('Moving issue to Done column:', issue.number);
-                  await octokit.projects.moveCard({
-                    card_id: issue.id,
-                    column_id: process.env.GITHUB_DONE_COLUMN_ID,
-                    position: 'top'
+                const archiveDate = new Date(match[1]);
+                console.log('Archive date:', archiveDate);
+                if (archiveDate < today) {
+                  console.log('Archiving issue:', issue.number);
+                  await octokit.issues.update({
+                    owner: process.env.GITHUB_OWNER,
+                    repo: process.env.GITHUB_REPO,
+                    issue_number: issue.number,
+                    state: 'closed',
+                    labels: [...issue.labels.map(label => label.name), 'archived']
                   });
+                } else {
+                  console.log('Issue not ready for archiving:', issue.number);
                 }
+              } else {
+                console.log('No archive date found for issue:', issue.number);
               }
             }
           }
 
-          moveIssues();" > move_issues.mjs
+          archiveIssues();" > archive_issues.mjs
 
-      - name: Run move_issues.mjs
+      - name: Run archive_issues.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_OWNER: 'Exo-create'
           GITHUB_REPO: 'Classe-Informatique-I.FDA-P1A-'
-          GITHUB_DONE_COLUMN_ID: ${{ env.DONE_COLUMN_ID }}
-        run: node move_issues.mjs
+        run: node archive_issues.mjs
