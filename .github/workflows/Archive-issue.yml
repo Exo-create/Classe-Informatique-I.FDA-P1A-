@@ -1,8 +1,6 @@
 name: Archive Issues by Date TEST
 
 on:
-#   schedule:
-#     - cron: '0 1 * * *' # Exécute tous les jours à minuit
   workflow_dispatch:
 
 jobs:
@@ -35,14 +33,16 @@ jobs:
 
             console.log('Issues fetched:', issues.data.length);
             const today = new Date();
-            console.log('Today\'s date:', today);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
+            console.log('Tomorrow\'s date:', tomorrow);
             for (const issue of issues.data) {
               console.log('Processing issue:', issue.number);
               const match = issue.body.match(/Date de fermeture: (\d{4}-\d{2}-\d{2})/);
               if (match) {
                 const archiveDate = new Date(match[1]);
                 console.log('Archive date:', archiveDate);
-                if (archiveDate < today) {
+                if (archiveDate < tomorrow) {
                   console.log('Archiving issue:', issue.number);
                   await octokit.issues.update({
                     owner: process.env.GITHUB_OWNER,
@@ -51,20 +51,16 @@ jobs:
                     state: 'closed',
                     labels: [...issue.labels.map(label => label.name), 'archived']
                   });
-                } else {
-                  console.log('Issue not ready for archiving:', issue.number);
                 }
-              } else {
-                console.log('No archive date found for issue:', issue.number);
               }
             }
           }
 
           archiveIssues();" > archive_issues.mjs
 
-      - name: Run archive_issues.mjs
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_OWNER: 'Exo-create'
-          GITHUB_REPO: 'Classe-Informatique-I.FDA-P1A-'
+      - name: Run archive_issues script
         run: node archive_issues.mjs
+        env:
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+          GITHUB_OWNER: \${{ secrets.GITHUB_OWNER }}
+          GITHUB_REPO: \${{ secrets.GITHUB_REPO }}
