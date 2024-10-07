@@ -1,8 +1,8 @@
-name: Archive Issues by Date
+name: Archive Issues by Date TEST
 
 on:
-  schedule:
-    - cron: '0 1 * * *' # Exécute tous les jours à minuit
+#   schedule:
+#     - cron: '0 1 * * *' # Exécute tous les jours à minuit
   workflow_dispatch:
 
 jobs:
