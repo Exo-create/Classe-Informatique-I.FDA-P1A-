@@ -20,6 +20,15 @@ jobs:
       - name: Install dependencies
         run: npm install @octokit/rest
 
+      - name: Get Done Column ID
+        id: get_column_id
+        run: |
+          DONE_COLUMN_ID=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                               -H "Accept: application/vnd.github.v3+json" \
+                               https://api.github.com/projects/YOUR_PROJECT_ID/columns | \
+                               jq -r '.[] | select(.name=="Terminé") | .id')
+          echo "DONE_COLUMN_ID=$DONE_COLUMN_ID" >> $GITHUB_ENV
+
       - name: Create move_issues.mjs
         run: |
           echo "import { Octokit } from '@octokit/rest';
@@ -45,7 +54,7 @@ jobs:
                   console.log('Moving issue to Done column:', issue.number);
                   await octokit.projects.moveCard({
                     card_id: issue.id,
-                    column_id: process.env.DONE_COLUMN_ID,
+                    column_id: process.env.GITHUB_DONE_COLUMN_ID,
                     position: 'top'
                   });
                 }
@@ -60,5 +69,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_OWNER: 'Exo-create'
           GITHUB_REPO: 'Classe-Informatique-I.FDA-P1A-'
-          DONE_COLUMN_ID: ${{ secrets.DONE_COLUMN_ID }}
+          GITHUB_DONE_COLUMN_ID: ${{ env.DONE_COLUMN_ID }}
         run: node move_issues.mjs
