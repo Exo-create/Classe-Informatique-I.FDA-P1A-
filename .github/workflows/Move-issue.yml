@@ -1,4 +1,5 @@
-name: Close Issues by Date
+
+name: Update Issues by Date
 
 on:
   schedule:
@@ -6,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  close_issues:
+  update_issues:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -20,42 +21,43 @@ jobs:
       - name: Install dependencies
         run: npm install @octokit/rest
 
-      - name: Create close_issues.mjs
+      - name: Create update_issues.mjs
         run: |
           echo "import { Octokit } from '@octokit/rest';
           const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
-          async function closeIssues() {
-            console.log('Fetching issues...');
+          async function updateIssues() {
+            console.log('Récupération des issues...');
             const issues = await octokit.issues.listForRepo({
               owner: process.env.GITHUB_OWNER,
               repo: process.env.GITHUB_REPO,
               state: 'open'
             });
 
-            console.log('Issues fetched:', issues.data.length);
+            console.log('Issues récupérées:', issues.data.length);
             const today = new Date();
             for (const issue of issues.data) {
-              console.log('Processing issue:', issue.number);
+              console.log('Traitement de l\'issue:', issue.number);
               const match = issue.body.match(/Date de fermeture: (\d{4}-\d{2}-\d{2})/);
               if (match) {
                 const closeDate = new Date(match[1]);
-                console.log('Close date:', closeDate);
+                console.log('Date de fermeture:', closeDate);
                 if (closeDate < today) {
-                  console.log('Updating issue status to "Terminé":', issue.number);
-                  await octokit.issues.update({
-                    owner: process.env.GITHUB_OWNER,
-                    repo: process.env.GITHUB_REPO,
-                    issue_number: issue.number,
-                    state: 'open',
-                    labels: [...issue.labels.map(label => label.name), 'Terminé']
+                  console.log('Mise à jour de l\'issue:', issue.number);
+                  await octokit.projects.updateCard({
+                    card_id: issue.project_card_id,
+                    note: 'Terminé'
                   });
                 }
               }
             }
           }
 
-          closeIssues();" > close_issues.mjs
+          updateIssues();" > update_issues.mjs
 
-      - name: Run close_issues script
-        run: node close_issues.mjs
+      - name: Run update_issues.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_OWNER: 'Exo-create'
+          GITHUB_REPO: 'Classe-Informatique-I.FDA-P1A-'
+        run: node update_issues.mjs
