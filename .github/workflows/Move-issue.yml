@@ -1,13 +1,12 @@
-name: Close Issues by Date
+name: Move Issues to Done Column by Date
 
 on:
   schedule:
     - cron: '0 16 * * *' # Exécute tous les jours à 16h
   workflow_dispatch:
 
-
 jobs:
-  close_issues:
+  move_issues:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -19,14 +18,17 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        run: npm install @octokit/rest
+        run: npm install @octokit/rest @octokit/plugin-rest-endpoint-methods
 
-      - name: Create close_issues.mjs
+      - name: Create move_issues.mjs
         run: |
           echo "import { Octokit } from '@octokit/rest';
-          const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+          import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods';
 
-          async function closeIssues() {
+          const MyOctokit = Octokit.plugin(restEndpointMethods);
+          const octokit = new MyOctokit({ auth: process.env.GITHUB_TOKEN });
+
+          async function moveIssues() {
             console.log('Fetching issues...');
             const issues = await octokit.issues.listForRepo({
               owner: process.env.GITHUB_OWNER,
@@ -43,23 +45,31 @@ jobs:
                 const closeDate = new Date(match[1]);
                 console.log('Close date:', closeDate);
                 if (closeDate < today) {
-                  console.log('Closing issue:', issue.number);
-                  await octokit.issues.update({
-                    owner: process.env.GITHUB_OWNER,
-                    repo: process.env.GITHUB_REPO,
-                    issue_number: issue.number,
-                    state: 'closed'
+                  console.log('Moving issue to Done column:', issue.number);
+                  const projectCards = await octokit.projects.listCards({
+                    column_id: process.env.GITHUB_DONE_COLUMN_ID
                   });
+
+                  const card = projectCards.data.find(card => card.content_url.includes(issue.number));
+                  if (card) {
+                    await octokit.projects.moveCard({
+                      card_id: card.id,
+                      position: 'top'
+                    });
+                  } else {
+                    console.log('No card found for issue:', issue.number);
+                  }
                 }
               }
             }
           }
 
-          closeIssues();" > close_issues.mjs
+          moveIssues();" > move_issues.mjs
 
-      - name: Run close_issues.mjs
+      - name: Run move_issues.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_OWNER: 'Exo-create'
           GITHUB_REPO: 'Classe-Informatique-I.FDA-P1A-'
-        run: node close_issues.mjs
+          GITHUB_DONE_COLUMN_ID: ${{ secrets.GITHUB_DONE_COLUMN_ID }}
+        run: node move_issues.mjs
