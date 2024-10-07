@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        curl -H "Authorization: token YOUR_GITHUB_TOKEN" \
+https://api.github.com/projects/YOUR_PROJECT_ID/columns
 
       - name: Setup Node.js
         uses: actions/setup-node@v2
