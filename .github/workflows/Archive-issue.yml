@@ -38,7 +38,7 @@ jobs:
             console.log('Today\'s date:', today);
             for (const issue of issues.data) {
               console.log('Processing issue:', issue.number);
-              const match = issue.body.match(/Date de fermeture: (\d{4}-\d{2}-\d{2})/);
+              const match = issue.body.match(/Date d'archivage: (\d{4}-\d{2}-\d{2})/);
               if (match) {
                 const archiveDate = new Date(match[1]);
                 console.log('Archive date:', archiveDate);
