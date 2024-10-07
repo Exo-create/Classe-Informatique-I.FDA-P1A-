@@ -42,7 +42,7 @@ jobs:
               if (match) {
                 const archiveDate = new Date(match[1]);
                 console.log('Archive date:', archiveDate);
-                if (archiveDate < today) {
+                if (archiveDate < today + 1) {
                   console.log('Archiving issue:', issue.number);
                   await octokit.issues.update({
                     owner: process.env.GITHUB_OWNER,
