@@ -18,7 +18,9 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        run: npm install @octokit/rest
+        run: |
+          sudo apt-get install jq
+          npm install @octokit/rest
 
       - name: Get Done Column ID
         id: get_column_id
