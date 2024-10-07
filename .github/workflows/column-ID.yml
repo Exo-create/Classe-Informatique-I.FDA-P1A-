@@ -18,6 +18,14 @@ jobs:
       - name: Install dependencies
         run: npm install @octokit/rest
 
+      - name: verify
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_PROJECT_ID: ${{ secrets.GITHUB_PROJECT_ID }}
+        run: curl -H "Authorization: token GITHUB_TOKEN" \
+        https://api.github.com/projects/PROJECT_ID/columns
+
+
       - name: Create get_column_id.mjs
         run: |
           echo "import { Octokit } from '@octokit/rest';
