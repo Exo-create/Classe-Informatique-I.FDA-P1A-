@@ -1,5 +1,5 @@
 
-name: Update Issues by Date TEST
+name: Move Issues by Date TEST
 
 on:
 #   schedule:
