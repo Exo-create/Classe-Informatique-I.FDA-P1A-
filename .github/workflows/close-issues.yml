@@ -42,7 +42,7 @@ jobs:
               if (match) {
                 const closeDate = new Date(match[1]);
                 console.log('Close date:', closeDate);
-                if (closeDate = today) {
+                if (closeDate == today) {
                   console.log('Closing issue:', issue.number);
                   await octokit.issues.update({
                     owner: process.env.GITHUB_OWNER,
