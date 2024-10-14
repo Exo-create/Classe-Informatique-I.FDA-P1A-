@@ -1,63 +1,66 @@
 
 name: Move Issues by Date TEST
-
-on:
-#   schedule:
-#     # - cron: '0 16 * * *' # Exécute tous les jours à 16h
+on: 
+  schedule: 
+    - cron: '0 16 * * *' # Exécute tous les jours à 16h
   workflow_dispatch:
-
 jobs:
-  update_issues:
+  move_issues:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-
       - name: Setup Node.js
         uses: actions/setup-node@v2
-        with:
+        with: 
           node-version: '18'
-
       - name: Install dependencies
         run: npm install @octokit/rest
-
-      - name: Create update_issues.mjs
+      - name: Create move_issues.mjs
         run: |
           echo "import { Octokit } from '@octokit/rest';
           const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
-          async function updateIssues() {
-            console.log('Récupération des issues...');
+          async function moveIssues() {
+            console.log('Fetching issues...');
             const issues = await octokit.issues.listForRepo({
               owner: process.env.GITHUB_OWNER,
               repo: process.env.GITHUB_REPO,
               state: 'open'
             });
-
-            console.log('Issues récupérées:', issues.data.length);
+            console.log('Issues fetched:', issues.data.length);
+            const projectColumns = await octokit.projects.listColumns({
+              project_id: process.env.PROJECT_ID
+            });
+            const doneColumn = projectColumns.data.find(column => column.name === 'Terminé');
+            if (!doneColumn) {
+              console.error('Terminé column not found');
+              return;
+            }
             const today = new Date();
             for (const issue of issues.data) {
-              console.log('Traitement de l\'issue:', issue.number);
+              console.log('Processing issue:', issue.number);
               const match = issue.body.match(/Date de fermeture: (\d{4}-\d{2}-\d{2})/);
               if (match) {
                 const closeDate = new Date(match[1]);
-                console.log('Date de fermeture:', closeDate);
+                console.log('Close date:', closeDate);
                 if (closeDate < today) {
-                  console.log('Mise à jour de l\'issue:', issue.number);
-                  await octokit.projects.updateCard({
-                    card_id: issue.project_card_id,
-                    note: 'Terminé'
+                  console.log('Moving issue to Terminé column:', issue.number);
+                  await octokit.projects.moveCard({
+                    card_id: issue.id,
+                    column_id: doneColumn.id,
+                    position: 'top'
                   });
                 }
               }
             }
           }
 
-          updateIssues();" > update_issues.mjs
-
-      - name: Run update_issues.mjs
-        env:
+          moveIssues();" > move_issues.mjs
+      - name: Run move_issues.mjs
+        env: 
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_OWNER: 'Exo-create'
           GITHUB_REPO: 'Classe-Informatique-I.FDA-P1A-'
-        run: node update_issues.mjs
+          PROJECT_ID: 'your_project_id'  # Remplace par l'ID réel de ton projet
+        run: node move_issues.mjs
