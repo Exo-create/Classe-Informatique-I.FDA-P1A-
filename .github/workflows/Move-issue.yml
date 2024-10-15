@@ -59,7 +59,7 @@ jobs:
           moveIssues();" > move_issues.mjs
       - name: Run move_issues.mjs
         env: 
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.MOVE_TOKEN }}
           GITHUB_OWNER: 'Exo-create'
           GITHUB_REPO: 'Classe-Informatique-I.FDA-P1A-'
           PROJECT_ID: '9'  # Remplace par l'ID réel de ton projet
