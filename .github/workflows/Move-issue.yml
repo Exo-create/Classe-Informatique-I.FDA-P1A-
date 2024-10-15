@@ -1,5 +1,4 @@
-
-name: Move Issues by Date TEST
+name: Move Issues by Date
 on: 
   schedule: 
     - cron: '0 16 * * *' # Exécute tous les jours à 16h
@@ -19,7 +18,7 @@ jobs:
       - name: Create move_issues.mjs
         run: |
           echo "import { Octokit } from '@octokit/rest';
-          const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+          const octokit = new Octokit({ auth: process.env.MOVE_TOKEN });
 
           async function moveIssues() {
             console.log('Fetching issues...');
@@ -59,8 +58,8 @@ jobs:
           moveIssues();" > move_issues.mjs
       - name: Run move_issues.mjs
         env: 
-          GITHUB_TOKEN: ${{ secrets.MOVE_TOKEN }}
+          MOVE_TOKEN: ${{ secrets.MOVE_TOKEN }}
           GITHUB_OWNER: 'Exo-create'
           GITHUB_REPO: 'Classe-Informatique-I.FDA-P1A-'
-          PROJECT_ID: '9'  # Remplace par l'ID réel de ton projet
+          PROJECT_ID: 'your_project_id'  # Remplace par l'ID réel de ton projet
         run: node move_issues.mjs
