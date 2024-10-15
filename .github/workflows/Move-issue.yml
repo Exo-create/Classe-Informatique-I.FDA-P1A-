@@ -61,5 +61,5 @@ jobs:
           GITHUB_APP_TOKEN: ${{ secrets.MOVE_TOKEN }} # Vérifie que le token est bien configuré
           GITHUB_OWNER: 'Exo-create'
           GITHUB_REPO: 'Classe-Informatique-I.FDA-P1A-'
-          PROJECT_ID: 'your_project_id'  # Remplace par l'ID réel de ton projet
+          PROJECT_ID: '9'  # Remplace par l'ID réel de ton projet
         run: node move_issues.mjs
